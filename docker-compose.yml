@@ -4,8 +4,6 @@
 # Остановка: docker compose down
 # Сброс БД и очередей: docker compose down -v
 
-version: "3.9"
-
 services:
 
   # =============================================
@@ -76,6 +74,9 @@ services:
       - "8001:8001"
     env_file:
       - ./bot_service/.env
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -83,7 +84,7 @@ services:
         condition: service_healthy
     command: >
       sh -c "uv run uvicorn app.main:app --host 0.0.0.0 --port 8001 &
-             uv run python -m app.bot.dispatcher"
+             uv run python -c 'from app.bot.dispatcher import run; run()'"
 
   # =============================================
   # Celery Worker — обработка LLM задач
@@ -96,6 +97,9 @@ services:
     container_name: celery_worker
     env_file:
       - ./bot_service/.env
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     depends_on:
       rabbitmq:
         condition: service_healthy
